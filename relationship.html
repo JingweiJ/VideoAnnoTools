@@ -1,0 +1,1035 @@
+<html xmlns="http://www.w3.org/1999/html">
+  <head>
+    <title>Tell the Relationships between Human and Objects</title>
+    <!-- amtbase depends on these libraries -->
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+    <!-- end of required libraries -->
+    <script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js'></script>
+    <link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet'>
+    <style>
+      .reference-video-container {
+        background-color: aliceblue;
+      }
+      .reference-image-container {
+        background-color: cornsilk;
+      }
+      #image-container-subject {
+        color: red;
+      }
+      #image-container-object {
+        color: green;
+      }
+      #text-area {
+        margin: 10px 0;
+        font-size: 24pt;
+      }
+      #text-boxes {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+      #explanation-area {
+        margin-bottom: 20px;
+      }
+      #button-div {
+        margin-bottom: 10px;
+      }
+      #counter {
+        margin: 0 10px;
+        font-size: 20pt;
+        font-weight: bold;
+      }
+      img {
+        height: 600px;
+      }
+      img.example {
+        height: 200px;
+      }
+      #instructions-container {
+        margin-top: 15px;
+        margin-bottom: 30px;
+        background-color: #F0EAD6;
+      }
+      p {
+        font-size: 17px;
+        /* text-align: center; */
+      }
+      #instructions-text {
+          width: 80%;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .light {
+          background-color: #F0EAD6;
+      }
+      .dark {
+          background-color: #F0EAD6;
+      }
+      .selected {
+        background-color: #66ccff;
+      }
+      .relationship {
+        margin: 20px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .relationship:hover {
+        opacity: 0.7;
+      }
+      #background-section {
+          width: 70%;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .example {
+          background-color: #ede0b6;
+          border: 30px;
+          padding: 10px;
+          margin: 10px;
+      }
+      .example-big {
+          background-color: #ede0b6;
+          border: 30px;
+          padding: 10px;
+          margin: 10px;
+      }
+      .example-big img {
+        height: 450px;
+      }
+      #instructions-text p {
+          margin: 10px;
+      }
+      .sg-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .rels-list-container {
+        /*display: flex;*/
+        /*flex-direction: column;*/
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div class='container'>
+      <h2>Choose the relationships that match the two words and the image.</h2>
+    </div>
+
+    <div class='container-fluid'>
+      <div class="row">
+        <div class='col-xs-12 col-lg-4 text-center reference-video-container'>
+          <h3>Reference Action: <span id="reference-action"></span></h3>
+          <img id="gif-container" src="" style="width:600px;height:auto">
+        </div>
+        <div class='col-xs-12 col-lg-4 text-center reference-image-container'>
+          <h3>What's the relationship between <span id="image-container-subject"></span> and <span id="image-container-object"></span> at this moment?</h3>
+          <div id='image-container'>
+          </div>
+        </div>
+        <div class='col-xs-12 col-lg-4 text-center'>
+          <h3>Click all that apply:</h3>
+          <div class="row">
+          	<div class='col-xs-2 col-lg-2'></div>
+            <div class='col-xs-12 col-lg-8 text-center align-items-center' id='rels-list'>
+            </div>
+            <div class='col-xs-2 col-lg-2'></div>
+          </div>
+          <div class="row">
+<!--             <div class='text-center' id="other-rel-area">
+              <textarea class='col' id='other-rel-area-textarea'></textarea>
+            </div> -->
+            <form>
+            	<div class='form-group' id='other-rel-area'>
+            		 <textarea class="form-control" id="other-rel-area-textarea" rows="3"></textarea>
+            	</div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class='row'>
+        <div class='col-xs-8 col-xs-offset-2 text-center' id='button-div'>
+          <button id='prev-btn' class='btn btn-lg btn-primary' disabled>Back</button>
+          <span id='counter'>
+            <span class='counter-top'></span> / <span class='counter-bottom'></span>
+          </span>
+          <button id='next-btn' class='btn btn-lg btn-primary' disabled>Next</button>
+        </div>
+        <div class='col-xs-8 col-xs-offset-2'>
+          <script type='text/json' id='input'>
+  
+</script>
+<form id='results-form' method='post' action='dummy' class='text-center'>
+  <input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+  <input type='hidden' value='' name='output' id='output'/>
+  <input type='submit' class='btn btn-lg btn-success' id='submit-btn' value='Submit' disabled/>          
+</form>
+<script>
+  var amtbase = (function() {
+    
+    // Copied from http://james.padolsey.com/javascript/bujs-1-getparameterbyname/
+    function getUrlParam(name) {
+      var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+      return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : null;
+    }
+
+    function getInput(default_input) {
+      if (typeof(default_input) === 'undefined') default_input = null;
+      try {
+        return JSON.parse($('#input').html());
+      } catch (e) {
+        return default_input;
+      }
+    }
+
+    function setOutput(output) {
+      $('#output').val(JSON.stringify(output));
+    }
+
+    function isPreview() {
+      return false;
+      var assignment_id = getUrlParam('assignmentId');
+      if (assignment_id === null) return false;
+      return assignment_id == 'ASSIGNMENT_ID_NOT_AVAILABLE';
+    }
+
+    function setupSubmit() {
+      var submit_to = getUrlParam('turkSubmitTo');
+      $('#results-form').attr('action', submit_to + '/mturk/externalSubmit');                      
+      $('#assignmentId').val(getUrlParam('assignmentId'));
+    }
+
+    return {
+      getInput: getInput,
+      setOutput: setOutput,
+      isPreview: isPreview,
+      setupSubmit: setupSubmit,
+    }
+
+  })();
+</script>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $(function() {
+
+        // Define some default input.
+        var DEFAULT_INPUT = [{
+          "url": "http://ai.stanford.edu/~jingweij/frames/W25MK.mp4/000074.png",
+          "gif_url": "http://ai.stanford.edu/~jingweij/gifs/W25MK.mp4/Watching_Reading_Looking_at_a_book_000001_000741.gif",
+          "img_id": "1",
+          "subject": {"name": "person", "rect": {'x': 147, 'y': 114, 'w': 102, 'h': 319}},
+          "object": {"name": "book", "rect": {'x': 160, 'y': 214, 'w': 67, 'h': 27}},
+          "relationships": ["next to", "in front of", "holding", "over", "other relationships"],
+          "action": "Reading a Book",
+        }, {
+          "url": "http://ai.stanford.edu/~jingweij/frames/3VT73.mp4/000040.png",
+          "gif_url": "http://ai.stanford.edu/~jingweij/gifs/3VT73.mp4/Working_at_a_table_000001_000471.gif",
+          "img_id": "2",
+          "subject": {"name": "person", "rect": {'x': 63, 'y': 97, 'w': 101, 'h': 163}},
+          "object": {"name": "table", "rect": {'x': 134, 'y': 157, 'w': 56, 'h': 61}},
+          "relationships": ["in front of", "next to", "on", "under", "near", "other relationships"],
+          "action": "Working at a Table",
+        }]
+
+        var input = null;
+        var bb = null;
+
+        // answers of images, parallel to input.
+        var answers = [];
+
+        var selected;
+
+        // Questions for each image;
+        var subjects = [];
+        var objects = [];
+
+        // Some variables to track state of the HIT.
+        var idx = 0;
+        var enabled = false;
+
+        var show_instructions = true;
+
+        // gold standard correctness flag
+        var gold_correct = true;
+
+        function main() {
+          // If this is a HIT on AMT, then replace the default input with the real input.
+          input = amtbase.getInput(DEFAULT_INPUT);
+
+          // Enable the UI if the HIT is not in preview mode.
+          if (!amtbase.isPreview()) {
+            enable_hit();
+          }
+
+          // Set up the answers.
+          _.each(input, function() { answers.push([]); });
+          selected = answers[idx];
+
+          // Preload all images
+          var imgs = [];
+          _.each(input, function(question) {
+            var img_url = question['url'];
+            // questions.push(question['question']);
+            var img = new Image();
+            img.onload = function() { console.log('loaded image from ' + img_url); };
+            img.src = img_url;
+          });
+
+          render();
+        }
+
+        function selector_fn(div, k) {
+          return function() {
+            if (selected.includes(k)) {
+              answers[idx].splice(answers[idx].indexOf(k), 1);
+              // div.removeClass('selected');
+            } else {
+              answers[idx].push(k);
+              // div.addClass('selected');
+            }
+            render();
+          }
+        }
+
+        // Use the current index to update the image and description
+        function render() {
+          // $('#question').text('Question: ' + input[idx]['question']);
+          // $('#response').text('Response: ' + input[idx]['response']);
+
+          // Set up the image
+          if (bb != null) {
+            bb.disable();
+            bb.remove();
+          }
+
+          // $('#gif-container').empty();
+          $('#image-container').empty();
+          $('#rels-list').empty();
+          // $('<img>').attr('src', input[idx]['url']).appendTo($('#image-container'));
+          // $('#subject').text(input[idx]['subject'].name);
+          // $('#object').text(input[idx]['object'].name);
+          $('#reference-action').text(input[idx]['action']);
+          $('#image-container-subject').text(input[idx]['subject'].name);
+          $('#image-container-object').text(input[idx]['object'].name);
+          // $('#gif-container').html('<img src=' + input[idx]['gif_url'] + ' style="width:600px;height:auto"></img>');
+          $('#gif-container').attr('src', input[idx]['gif_url']);
+
+          bb = new VGG.BBoxDrawer($('#image-container'), input[idx]['url'], 600);
+          bb.enable();
+          if('rect' in input[idx]['subject']) {
+            // render box in its place
+            var drect = input[idx]['subject'].rect;
+            if (drect) {
+              //debugger;
+              bb.restoring();
+              // bb.setBoxPosition(drect);
+              bb.setStaticBox1(drect);
+            }
+          }
+          if('rect' in input[idx]['object']) {
+            // render box in its place
+            var drect = input[idx]['object'].rect;
+            if(drect) {
+              //debugger;
+              bb.restoring();
+              // bb.setBoxPosition(drect);
+              bb.setStaticBox2(drect);
+            }
+          }
+
+
+          bb.disable();
+
+          selected = answers[idx];
+          if (selected.includes(input[idx]['relationships'].length - 1)) {
+            $('#other-rel-area').show();
+          } else {
+            $('#other-rel-area').hide();
+          }
+
+          // Set up the selection area
+          for (let i=0; i < input[idx]['relationships'].length; i++) {
+            let rel = input[idx]['relationships'][i];
+            let rel_div = $('<div>')
+                            .attr('class', 'relationship')
+                            .attr('id', 'rel-'+i)
+                            .appendTo('#rels-list');
+
+            if (i === input[idx]['relationships'].length - 1) {
+              $('<h4>')
+                  .text(rel)
+                  .addClass('rel-text text-center')
+                  .appendTo(rel_div);
+            } else {
+              $('<h4>')
+                  .text(input[idx]['subject'].name + ' ' + rel + ' ' + input[idx]['object'].name)
+                  .addClass('rel-text text-center')
+                  .appendTo(rel_div);
+            }
+
+            // Alternate background colors
+            if (i % 2 == 0) {
+              rel_div.addClass('dark');
+            } else {
+              rel_div.addClass('light')
+            }
+
+            // Highlight previously selected
+            if (selected.includes(i)) {
+              rel_div.addClass('selected');
+            }
+
+            rel_div.click(selector_fn(rel_div, i));
+          }
+
+          // Refresh the counter
+          $('.counter-top').text(idx + 1);
+          $('.counter-bottom').text(input.length);
+
+          // If the UI is enabled, enable or disable the buttons depending on
+          // the index.
+          if (enabled) {
+            var prev_btn = $('#prev-btn');
+            var next_btn = $('#next-btn');
+
+            prev_btn.prop('disabled', true);
+  	        next_btn.prop('disabled', true);
+            if (idx > 0) {
+              prev_btn.prop('disabled', false);
+            }
+            if (idx < input.length - 1) next_btn.prop('disabled', false);
+          }
+        }
+
+        // Update the index, and save the text in the text area.
+        function set_idx(new_idx) {
+          if (new_idx < 0 || new_idx >= input.length) return;
+          answers[idx] = selected;
+          idx = new_idx;
+          render();
+        }
+
+        function check_answer(answer, gold_answer) {
+            return answer === gold_answer;
+        }
+
+        function check_gold() {
+            if (!("gold_answer" in input[idx])) {
+                return true;
+            }
+            answer = selected;
+            gold_answer = input[idx].gold_answer;
+            gold_explanation = input[idx].gold_explanation;
+            if (check_answer(answer, gold_answer)) {
+                return true;
+            } else {
+                alert_string = 'Your answer is incorrect.'
+                alert_string += `\nReview the common mistakes we described in the instructions.`;
+                alert_string += "\n\n\n" + "Please fix your answer before continuing.";
+                alert(alert_string);
+                gold_correct = false;
+                return false;
+            }
+        }
+
+        function mouseWasReleased() {
+          $("#rels-list").focus()
+        }
+
+        function toggle_instructions() {
+          if (show_instructions) {
+            $('#instructions-section').hide();
+            $('#show-instructions').text('Show Instructions');
+          } else {
+            $('#instructions-section').show();
+            $('#show-instructions').text('Hide Instructions');
+          }
+            show_instructions = !show_instructions;
+        }
+
+        // Enable the UI.
+        function enable_hit() {
+          enabled = true;
+
+          // Enable components
+          $('#next-btn').click(function() {
+              if (check_gold()) {
+                  set_idx(idx + 1);
+              }
+          });
+          $('#prev-btn').click(function() {
+              if (check_gold()) {
+                  set_idx(idx - 1);
+              } else {
+              }
+          });
+          $('#show-instructions').click(function() { toggle_instructions() });
+          if (idx < input.length - 1) {
+            $('#next-btn').prop('disabled', false);
+          } else {
+            $('#next-btn').prop('disabled', true);
+          }
+          $('#text-area').prop('disabled', false);
+          $('#explanation-area').prop('disabled', false);
+          $('#submit-btn').prop('disabled', false);
+
+          // Set up submit handler.
+          amtbase.setupSubmit();
+          $('#submit-btn').click(function() {
+            if (!check_gold()) {
+                return false;
+            }
+            answers[idx] = selected;
+            if (_.any(answers, function(d) { return d === null; })) {
+              alert('You did not select an option for one or more questions. Correct before submitting.');
+              return false;
+            }
+            var answer_text = _.map(answers, function(x, i) {
+              return input[i]['relationships'][x];
+            })
+            var output = _.map(_.zip(input, answers, answer_text), function(x) {
+              if ("gold_answer" in x[0]) {
+                return {'info': x[0], 'answer_idx': x[1], 'answer': x[2], 'gold_correct': gold_correct};
+              } else {
+                return {'info': x[0], 'answer_idx': x[1], 'answer': x[2]};
+              }
+            });
+            amtbase.setOutput(output);
+          });
+        }
+
+// NOW FOLLOWS BOUNDING BOX CODE
+
+var VGG = (function(vg, $) {
+
+  var DEFAULT_OPTIONS = {
+    static_box1_color: 'red',
+    static_box2_color: 'green',
+    bbox_color: '#ff0',
+    bbox_line_width: 2.0,
+    click_radius: 15,
+    handle_opacity: 0.2,
+    dot_small_radius: 5,
+    dot_big_radius: 10,
+    image_opacity: 1.0,
+    max_height: null,
+    max_width: null,
+    callback: function() {},
+  };
+
+  /*
+  var STATIC_BOX_COLOR = '#f00';
+  var BBOX_COLOR = '#00f';
+  var BBOX_LINE_WIDTH = 2.0;
+
+  var CLICK_RADIUS = 15;
+  var HANDLE_OPACITY = 0.2;
+
+  var OBJECT_SMALL_RADIUS = 5;
+  var OBJECT_BIG_RADIUS = 10;
+  */
+
+  vg.merge_options = function(options, default_options) {
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    for (var opt in default_options) {
+      if (default_options.hasOwnProperty(opt)
+          && !options.hasOwnProperty(opt)) {
+        options[opt] = default_options[opt];
+      }
+    }
+
+    return options;
+  }
+
+  var TEXT_FONT_SIZE = 20;
+  var TEXT_FONT = TEXT_FONT_SIZE + 'px sans-serif';
+  var TEXT_BOX_PADDING = 4;
+
+  vg.BBoxDrawer = function(div, image_url, canvas_width, options) {
+    var that = (this === vg ? {} : this);
+
+    options = vg.merge_options(options, DEFAULT_OPTIONS);
+
+    var scale = null;
+    var canvas = null;
+    var canvas_pos = null;
+    var ctx = null;
+
+    // Most recent positions of the mouse and of a click
+    var click_pos = null;
+    var mouse_pos = null;
+
+    // Whether the box has been been finalized after the initial drag
+    var bbox_drawn = false;
+
+    // Object with properties x, y, w, h
+    var bbox = null;
+    var static_box1 = null;
+    var static_box2 = null;
+
+    var object_pos = null;
+    var object_name = null;
+
+    var resize_direction = null;
+    var old_bbox = null;
+
+    var img_loaded = true;
+
+    var disabled = true;
+
+    var cursors = {
+      'UL': 'nw-resize',
+      'UR': 'ne-resize',
+      'BL': 'sw-resize',
+      'BR': 'se-resize',
+      'U': 'n-resize',
+      'R': 'e-resize',
+      'L': 'w-resize',
+      'B': 's-resize',
+    };
+
+    var img = new Image();
+    img.onload = setup;
+    img.onerror = function() {
+      img_loaded = false;
+    }
+    img.src = image_url;
+
+    that.getBoxPosition = function() {
+      if (bbox) {
+        // Convert to image coordinates
+        return {
+          'x': Math.floor(toImageCoords(bbox.x)),
+          'y': Math.floor(toImageCoords(bbox.y)),
+          'w': Math.floor(toImageCoords(bbox.w)),
+          'h': Math.floor(toImageCoords(bbox.h))
+        };
+      }
+      return null;
+    }
+
+    that.setBoxPosition = function(b) {
+      scale = choose_scale(img)
+      // copy it over
+      bbox = {};
+      bbox.x = Math.floor(toCanvasCoords(b.x));
+      bbox.y = Math.floor(toCanvasCoords(b.y));
+      bbox.w = Math.floor(toCanvasCoords(b.w));
+      bbox.h = Math.floor(toCanvasCoords(b.h));
+      draw();
+    }
+
+    that.enable = function() {
+      disabled = false;
+      draw();
+    }
+
+    that.disable = function() {
+      disabled = true;
+      mouseup();
+      draw();
+    }
+
+    that.setObject = function(x, y, name) {
+      if (scale) {
+        object_pos = {'x': toCanvasCoords(x), 'y': toCanvasCoords(y)};
+      } else {
+        object_pos = {'x': x, 'y': y};
+      }
+      object_name = name;
+    }
+
+    that.setStaticBox2 = function(box) {
+      static_box2 = $.extend({}, box);
+      if (scale) {
+        static_box2.x = toCanvasCoords(box.x);
+        static_box2.y = toCanvasCoords(box.y);
+        static_box2.w = toCanvasCoords(box.w);
+        static_box2.h = toCanvasCoords(box.h);
+      }
+      draw();
+    }
+
+    that.setStaticBox1 = function(box) {
+      static_box1 = $.extend({}, box);
+      if (scale) {
+        static_box1.x = toCanvasCoords(box.x);
+        static_box1.y = toCanvasCoords(box.y);
+        static_box1.w = toCanvasCoords(box.w);
+        static_box1.h = toCanvasCoords(box.h);
+      }
+      draw();
+    }
+
+    function choose_scale(img) {
+      if (_.isNumber(options.max_width) && _.isNumber(options.max_height)) {
+        var scale_h = img.width / options.max_width;
+        var scale_v = img.height / options.max_height;
+        return Math.max(scale_h, scale_v);
+      } else {
+        return img.width / canvas_width;
+      }
+    }
+
+    that.restoring = function() {
+      bbox_drawn = true;
+    }
+
+    that.reset = function() {
+      click_pos = null;
+      mouse_pos = null;
+      bbox_drawn = false;
+      bbox = null;
+      static_box1 = null;
+      static_box2 = null;
+      var object_pos = null;
+      var object_name = null;
+      var resize_direction = null;
+      var old_bbox = null;
+      $("#drawcanv").css({'cursor': 'crosshair'}); // reset cursor
+      draw();
+    }
+
+    function setup() {
+      // scale = img.width / canvas_width;
+      scale = choose_scale(img);
+      canvas_width = img.width / scale;
+      var canvas_height = img.height / scale;
+      canvas = $('<canvas>')
+                .attr({'width': canvas_width,
+                       'height': canvas_height})
+                .attr('id', 'drawcanv')
+                .css({'cursor': 'pointer'})
+                .appendTo(div);
+
+      canvas_pos = {'x': canvas.offset().left, 'y': canvas.offset().top};
+      ctx = canvas[0].getContext('2d');
+      canvas.mousemove(mousemove);
+      canvas.mousedown(mousedown);
+      canvas.mouseup(mouseup);
+      canvas.mouseout(mouseup);
+
+      if (object_pos) {
+        object_pos.x = toCanvasCoords(object_pos.x);
+        object_pos.y = toCanvasCoords(object_pos.y);
+      }
+
+      // Convert the static box from image coordinates to canvas coordinates
+      if (static_box1) {
+        var props = ['x', 'y', 'w', 'h'];
+        for (var i = 0; i < props.length; i++) {
+          static_box1[props[i]] = toCanvasCoords(static_box1[props[i]]);
+        }
+      }
+
+      // Convert the static box from image coordinates to canvas coordinates
+      if (static_box2) {
+        var props = ['x', 'y', 'w', 'h'];
+        for (var i = 0; i < props.length; i++) {
+          static_box2[props[i]] = toCanvasCoords(static_box2[props[i]]);
+        }
+      }
+
+      draw();
+      options.callback();
+    }
+
+    function toCanvasCoords(x) { return x / scale; }
+    function toImageCoords(x) { return x * scale; }
+    function setCursor(cursor) { canvas.css('cursor', cursor); }
+
+    function getPosition(e) {
+      var x = e.pageX - canvas_pos.x;
+      var y = e.pageY - canvas_pos.y;
+      return {'x': x, 'y': y};
+    }
+
+    function mousedown(e) {
+      if (disabled) return;
+      click_pos = getPosition(e);
+      if (bbox) {
+        resize_direction = detectCollision(click_pos.x, click_pos.y, bbox);
+        if (resize_direction) {
+          old_bbox = $.extend({}, bbox);
+        }
+      }
+    }
+
+    function mouseup(e) {
+      click_pos = null;
+      resize_direction = null;
+      if (bbox) {
+        bbox_drawn = true;
+        setCursor('pointer');
+      }
+      // mouseWasReleased();
+      draw();
+    }
+
+    function mousemove(e) {
+      mouse_pos = getPosition(e);
+      updateBBox();
+
+      if (bbox && !click_pos && !disabled) {
+        var collision = detectCollision(mouse_pos.x, mouse_pos.y, bbox);
+        if (cursors.hasOwnProperty(collision)) {
+          setCursor(cursors[collision]);
+        } else {
+          setCursor('pointer');
+        }
+      }
+
+      draw();
+    }
+
+    function detectCollision(x, y, box) {
+      function dist(x1, y1, x2, y2) {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+      if (dist(x, y, box.x, box.y) < options.click_radius) {
+        return 'UL';
+      } else if (dist(x, y, box.x + box.w, box.y) < options.click_radius) {
+        return 'UR';
+      } else if (dist(x, y, box.x, box.y + box.h) < options.click_radius) {
+        return 'BL';
+      } else if (dist(x, y, box.x + box.w, box.y + box.h)
+                 < options.click_radius) {
+        return 'BR';
+      } else if (Math.abs(box.x - x) < options.click_radius) {
+        return 'L';
+      } else if (Math.abs(box.x + box.w - x) < options.click_radius) {
+        return 'R';
+      } else if (Math.abs(box.y - y) < options.click_radius
+                 && x >= bbox.x && x <= bbox.x + bbox.w) {
+        return 'U';
+      } else if (Math.abs(box.y + box.h - y) < options.click_radius
+                 && y >= bbox.y && y <= bbox.y + bbox.h) {
+        return 'B';
+      }
+
+      return null;
+    }
+
+    function updateBBox() {
+      function makeBBox(x1, y1, x2, y2) {
+        var x = Math.min(x1, x2);
+        var y = Math.min(y1, y2);
+        var w = Math.max(x1, x2) - x;
+        var h = Math.max(y1, y2) - y;
+        return {'x': x, 'y': y, 'w': w, 'h': h};
+      }
+      if (!bbox_drawn && click_pos && mouse_pos) {
+        bbox = makeBBox(click_pos.x, click_pos.y, mouse_pos.x, mouse_pos.y);
+      } else if (bbox_drawn && click_pos && mouse_pos && resize_direction) {
+        var x1 = old_bbox.x;
+        var x2 = old_bbox.x + old_bbox.w;
+        var y1 = old_bbox.y;
+        var y2 = old_bbox.y + old_bbox.h;
+        if (resize_direction === 'L'
+            || resize_direction === 'UL'
+            || resize_direction === 'BL') {
+          x1 = mouse_pos.x;
+        }
+        if (resize_direction === 'R'
+            || resize_direction === 'UR'
+            || resize_direction === 'BR') {
+          x2 = mouse_pos.x;
+        }
+        if (resize_direction === 'U'
+            || resize_direction === 'UR'
+            || resize_direction === 'UL') {
+          y1 = mouse_pos.y;
+        }
+        if (resize_direction === 'B'
+            || resize_direction === 'BR'
+            || resize_direction === 'BL') {
+          y2 = mouse_pos.y;
+        }
+        bbox = makeBBox(x1, y1, x2, y2);
+      }
+    }
+
+    function drawBox(box, box_color) {
+      ctx.save();
+
+      function r(x) { return Math.floor(x); }
+
+      ctx.strokeStyle = box_color;
+      ctx.lineWidth = options.bbox_line_width;
+      ctx.strokeRect(r(box.x), r(box.y), r(box.w), r(box.h));
+
+      ctx.restore();
+    }
+
+    function drawCrosshair(x, y) {
+      if (disabled) { return; };
+      y = Math.floor(y) + 0.5;
+      x = Math.floor(x) + 0.5;
+
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fff';
+      ctx.globalAlpha = 0.3;
+
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height());
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width(), y);
+      ctx.stroke();
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#000';
+      ctx.globalAlpha = 1.0;
+
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height());
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width(), y);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawHandle(x, y) {
+      ctx.save();
+      ctx.globalAlpha = options.handle_opacity;
+
+      ctx.beginPath();
+      ctx.arc(x, y, options.click_radius, 0, 2 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawObject(x, y, name, emphasized) {
+      ctx.save();
+      ctx.fillStyle = options.bbox_color;
+
+      var r = emphasized ? options.dot_big_radius : options.dot_small_radius;
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      if (emphasized) {
+        // Draw the text box
+        var width = ctx.measureText(name).width;
+
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#000';
+        ctx.beginPath();
+        var x1 = x - width - TEXT_BOX_PADDING;
+        var x2 = x + width + TEXT_BOX_PADDING;
+        var y1 = y + options.dot_big_radius + 1.5 * TEXT_BOX_PADDING;
+        var y2 = y1 + 1.5 * TEXT_BOX_PADDING + TEXT_FONT_SIZE;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1, y2);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x2, y1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = TEXT_FONT;
+        ctx.fillStyle = '#000';
+        var tx = x - width;
+        var ty = y + TEXT_FONT_SIZE + 2.5 * TEXT_BOX_PADDING + options.dot_big_radius;
+        ctx.fillText(name, tx, ty);
+      }
+
+      ctx.restore();
+    }
+
+    function draw() {
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width(), canvas.height());
+      ctx.save();
+      ctx.globalAlpha = options.image_opacity;
+      ctx.drawImage(img, 0, 0, canvas.width(), canvas.height());
+      ctx.restore();
+
+      // if (disabled) return;
+
+      if (static_box1) {
+        drawBox(static_box1, options.static_box1_color);
+      }
+
+      if (static_box2) {
+        drawBox(static_box2, options.static_box2_color);
+      }
+
+      if (object_name && object_pos) {
+        var emphasized = false;
+        if (mouse_pos) {
+          var dx = mouse_pos.x - object_pos.x;
+          var dy = mouse_pos.y - object_pos.y;
+          if (Math.sqrt(dx * dx + dy * dy) < options.click_radius) {
+            emphasized = true;
+          }
+        }
+
+        drawObject(object_pos.x, object_pos.y, object_name, emphasized);
+      }
+
+      if (bbox) {
+        if (bbox_drawn) {
+          drawHandle(bbox.x, bbox.y);
+          drawHandle(bbox.x + bbox.w, bbox.y);
+          drawHandle(bbox.x, bbox.y + bbox.h);
+          drawHandle(bbox.x + bbox.w, bbox.y + bbox.h);
+        } else {
+          drawCrosshair(bbox.x, bbox.y);
+          drawCrosshair(bbox.x + bbox.w, bbox.y + bbox.h);
+        }
+        drawBox(bbox, options.bbox_color);
+      } else if (mouse_pos) {
+        drawCrosshair(mouse_pos.x, mouse_pos.y);
+      }
+    }
+
+    that.remove = function() {
+      if (img_loaded) {
+        canvas.remove();
+      }
+    }
+
+    return that;
+  }
+
+  return vg;
+
+}(VGG || {}, jQuery));
+
+        main();
+
+      });
+    </script>
+  </body>
+</html>

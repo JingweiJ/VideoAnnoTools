@@ -1,0 +1,1065 @@
+<html>
+  <head>
+    <title>Describe images with text</title>
+    <!-- amtbase depends on these libraries -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+    <!-- end of required libraries -->
+    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js'></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js'></script>
+    <script src="https://visualgenome.org/static/js/VG/bleu.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/iou.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.2/raphael-min.js'></script>
+    <script src="https://visualgenome.org/static/js/VG/utils.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/colors.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/text-box.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/circle-object.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/image-canvas.js"></script>
+    <script src="https://visualgenome.org/static/js/VG/open-sentences-backbone-lib.js"></script>
+    <script src='https://visualgenome.org/static/js/VG/visualize_single_image.js'></script>
+    <script src='https://visualgenome.org/static/OpenSentences/open-sentences-lib.js'></script>
+    <style>
+      #text-area {
+        font-size: 20pt;
+        width:500px;
+        margin-top: 10px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 100px;
+      }
+      #button-div {
+        margin-bottom: 10px;
+      }
+      #counter {
+        margin: 0 10px;
+        font-size: 20pt;
+        font-weight: bold;
+      }
+      .desc {
+        font-size: 14pt;
+      }
+      #image-container {
+        min-height: 500px;
+      }
+      #gif-container {
+        /*min-height: 500px;*/
+      }
+      .entity-example-container {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 25px;
+        margin-bottom: 25px;
+      }
+      .entity-example {
+        height: 300px;
+      }
+      .red {
+        background-color: red;
+        color: white;
+      }
+      .green {
+        background-color: green;
+        color: white;
+      }
+      .reference-container {
+        background-color: aliceblue;
+        padding: 10px;
+      }
+      .workspace-container {
+        background-color: cornsilk;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+          <h2>Draw the bounding boxes of objects.</h2>
+
+          <div class="desc">
+            <!-- <p><h3>What's going inside the bounding boxes?</h3> -->
+              <p>We'll be going through a list of objects occurring in videos.</p>
+            <p><b>Objects</b> are things that appear in the image, like cat, grass, or jacket. Draw a bounding box around each object in the list.</p>
+
+            <h3>How should the bounding box be drawn?</h3>
+            <ul>
+              <li>You'll be given the object to look for. Draw a box with your mouse around the relevant image region.</li>
+              <li>
+                Each box should be <b>tight</b> around its object, and should <b>completely cover</b> the object.
+                <div class='row text-center'>
+                  <div class='col-md-4 bbox-example bg-success'>
+                    <b>Good:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/tight_correct.jpg'>
+                  </div>
+                  <div class='col-md-4 bbox-example bg-danger'>
+                    <b>Bad:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/tight_wrong1.jpg'>
+                  </div>
+                  <div class='col-md-4 bbox-example bg-danger'>
+                    <b>Bad:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/tight_wrong2.jpg'>
+                  </div>
+                </div>
+              </li>
+              <li>
+                Each box should only cover the <b>visible part</b> of all objects mentioned in the object.
+                <div class='row text-center'>
+                  <div class='col-md-4 col-md-offset-2 bbox-example bg-success'>
+                    <b>Good:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/vis_correct.jpg'>
+                  </div>
+                  <div class='col-md-4 bbox-example bg-danger'>
+                    <b>Bad:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/vis_wrong.jpg'>
+                  </div>
+                </div>
+              </li>
+              <li>
+                Objects that take up a large portion of the image should be <b>completey covered</b>
+                by their boxes, such as the boxes for the <b>road</b> below:
+                <div class='row text-center'>
+                  <div class='col-md-4 col-md-offset-2 bbox-example bg-success'>
+                    <b>Good:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/large-good.png'>
+                  </div>
+                  <div class='col-md-4 bbox-example bg-danger'>
+                    <b>Bad:</b>
+                    <br>
+                    <img class='img-responsive' src='https://visualgenome.org/static/images/bounding_box_examples/large-bad.png'>
+                  </div>
+                </div>
+              </li>
+              <li>
+                If the object we're asking for does not exist in the image, click <b>"No Box Exists"</b> and continue to the next one.
+                Click this button will remove the current box and disable box drawing.  Click the button again to re-enable.
+                <br />
+                Every question should either have a bounding box or be marked as "No Box Exists".
+              </li>
+              <li>
+                If for whatever reason the box drawing cursor is not aligned with your mouse, click "Redraw box" to reset
+                the interface.
+              </li>
+              <li>
+                If no image loads, click <b>"No Box Exists"</b> and continue to the next question.
+              </li>
+            </ul>
+          </div>
+        <hr>
+
+        <div class="container" style="display: none;">
+          <div id="viz"></div>
+        </div>
+
+        <hr>
+
+    </div>
+
+    <div class="container">
+      <h3>YOUR TASK IS BELOW</h3>
+    </div>
+<!--    <div class='container-fluid'>-->
+
+    <div class="container">
+      <div class="reference-container">
+        <div class="row">
+          <div class="col-xs-12 col-xs-offset-1">
+            <h3>[Reference Video]</h3>
+            <h3 id="gif-title"></h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12 text-center">
+            <div id="gif-container">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="workspace-container">
+        <div class='row'>
+          <div class='col-xs-10 col-xs-offset-1'>
+            <h3>[Your Workspace]</h3>
+            <h2 id='entity'></h2>
+            <h3 id='specific-action'></h3>
+            <h4>The object you draw around <b>MUST</b> correspond to the action described above!<br>If you don't see the object in this frame, or you aren't sure where it is, click <b>No Box Exists</b>.</h4>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col-xs-12 text-center'>
+            <div id='image-container'>
+            </div>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='col-sx-12 text-center button-div'>
+            <button id='redraw' class='btn btn-lg btn-primary' disabled>Redraw Box</button>
+            <button id='skip' class='btn btn-lg btn-prmiary red' disabled>No Box Exists</button>
+          </div>
+          <div class='col-xs-12 text-center' id='button-div'>
+            <button id='prev-btn' tabindex="1" class='btn btn-lg btn-primary' disabled>Back</button>
+            <span id='counter'>
+              <span class='counter-top'></span> / <span class='counter-bottom'></span>
+            </span>
+            <button id='next-btn' tabindex="0" class='btn btn-lg btn-primary' disabled>Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+<!--    </div>-->
+
+    <script type='text/json' id='input'>
+  
+</script>
+<form id='results-form' method='post' action='dummy' class='text-center'>
+  <input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+  <input type='hidden' value='' name='output' id='output'/>
+  <input type='submit' class='btn btn-lg btn-success' id='submit-btn' value='Submit' disabled/>          
+</form>
+<script>
+  var amtbase = (function() {
+    
+    // Copied from http://james.padolsey.com/javascript/bujs-1-getparameterbyname/
+    function getUrlParam(name) {
+      var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+      return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : null;
+    }
+
+    function getInput(default_input) {
+      if (typeof(default_input) === 'undefined') default_input = null;
+      try {
+        return JSON.parse($('#input').html());
+      } catch (e) {
+        return default_input;
+      }
+    }
+
+    function setOutput(output) {
+      $('#output').val(JSON.stringify(output));
+    }
+
+    function isPreview() {
+      return false;
+      var assignment_id = getUrlParam('assignmentId');
+      if (assignment_id === null) return false;
+      return assignment_id == 'ASSIGNMENT_ID_NOT_AVAILABLE';
+    }
+
+    function setupSubmit() {
+      var submit_to = getUrlParam('turkSubmitTo');
+      $('#results-form').attr('action', submit_to + '/mturk/externalSubmit');                      
+      $('#assignmentId').val(getUrlParam('assignmentId'));
+    }
+
+    return {
+      getInput: getInput,
+      setOutput: setOutput,
+      isPreview: isPreview,
+      setupSubmit: setupSubmit,
+    }
+
+  })();
+</script>
+
+    <script>
+      $(function() {
+        var DEFAULT_INPUT = [
+          {'url': 'https://ai.stanford.edu/~jingweij/004QE.png', 'image_id': 1, 'action': 'Drinking from a cup/glass/bottle',  'entity': 'cup', 'gifurl': 'https://ai.stanford.edu/~jingweij/004QE.gif', 'gold_answerable': true, 'gt_box': {'x': 259, 'y': 27, 'w': 26, 'h': 34}},
+          {'url': 'https://ai.stanford.edu/~jingweij/001YG.png', 'image_id': 2, 'action': 'Taking a bag from somewhere',  'entity': 'bag', 'gifurl': 'https://ai.stanford.edu/~jingweij/001YG.gif'},
+          {'url': 'https://ai.stanford.edu/~jingweij/00T1E.png', 'image_id': 3, 'action': 'Closing a laptop',  'entity': 'laptop', 'gifurl': 'https://ai.stanford.edu/~jingweij/00T1E.gif'},
+        ];
+        var input = amtbase.getInput(DEFAULT_INPUT);
+        var num_regions = input.length;
+        var descriptions = [];
+        var bb = null;
+
+        // Some variables to track state of the HIT.
+        var idx = 0;
+        var enabled = false;
+
+        function containsNonLatinCodepoints(s) {
+          return /[^\u0000-\u00ff]/.test(s);
+        }
+
+        function main() {
+          // If this is a HIT on AMT, then replace the default input with the real input.
+
+          // Enable the UI if the HIT is not in preview mode.
+          if (true || !amtbase.isPreview()) {
+            enable_hit();
+          }
+
+          // Set up empty description blobs
+          for(var k=0;k<num_regions;k++) {
+            let desc = input[k]
+            desc.answerable = true;
+            descriptions.push(desc);
+          };
+
+          render();
+        }
+
+        var isup = false;
+        $("#demoshow").click(function(){
+          if(!isup) {
+            var gifurl = "http://cs.stanford.edu/people/rak248/visualgenome/region_annotations_instructions.gif";
+            $("#demo").html('<img src="' + gifurl + '">');
+            isup = true;
+          } else {
+            $("#demo").html('');
+            isup = false;
+          }
+        });
+
+        function render_regions(image_url, regions) {
+          var div = $('#viz');
+          div.html('');
+          var graph = {'objects': [], 'unary_triples': [], 'binary_triples': []}
+          if (regions != null) {
+            for (var index in regions) {
+              graph.objects.push({'names': [regions[index].phrase],
+                                  'bbox': {'x': regions[index].x,
+                                           'y': regions[index].y,
+                                           'w': regions[index].w,
+                                           'h': regions[index].h
+                                  }
+                                 })
+              graph.unary_triples.push({'subject': index,
+                                        'predicate': '',
+                                        'object': '',
+                                        'attribute': '',
+                                        'text': [regions[index].phrase, '', '']})
+            }
+          }
+          //var div = $('<div>').appendTo($('#image-container'));
+          VG.renderSingleImage(div, graph, image_url, 700, {'VGViz': false});
+        }
+
+        // Use the current index to update the image and description
+        function render() {
+          // console.log(descriptions);
+          if (bb != null) {
+            bb.disable();
+            bb.remove();
+          }
+          // render_regions(input[idx]['url'], input[idx]['regions']);
+          $('#entity').html('');
+          $('#specific-action').html('');
+          $('#gif-title').html('');
+          $('#gif-container').html('');
+          $('#image-container').html('');
+
+          let entity = input[idx]['entity'];
+          $('#entity').html('Draw a box around: <span style="color: red;font-weight: bold">' + entity + '</span>');
+          $('#gif-title').html("<span>Specific Action: <span style='color: red; font-weight: bold'>" + input[idx]['action'] + "</span>");
+          $('#specific-action').html("<span>Specific Action: <span style='color: red; font-weight: bold'>" + input[idx]['action'] + "</span>");
+
+          let gifurl = input[idx]['gifurl'];
+          $('#gif-container').html('<img src="' + gifurl + '">');
+
+          bb = new VGG.BBoxDrawer($('#image-container'), input[idx]['url'], 700);
+          bb.enable();
+
+          if('rect' in descriptions[idx] && descriptions[idx].rect !== null) {
+            // render box in its place
+            // console.log(JSON.stringify(descriptions[idx].rect));
+            var drect = descriptions[idx].rect;
+            if(drect) {
+              //debugger;
+              bb.restoring();
+              bb.setBoxPosition(drect);
+              // bb.setStaticBox(drect); // TODO: uncomment this line for viewing results
+            }
+          } else {
+            // also put bounding box drawer into crosshair mode
+            bb.reset();
+          }
+
+          // Refresh the counter
+          $('.counter-top').text(idx + 1);
+          $('.counter-bottom').text(num_regions);
+
+          // If the UI is enabled, enable or disable the buttons depending on
+          // the index.
+          if (enabled) {
+            var prev_btn = $('#prev-btn');
+            var next_btn = $('#next-btn');
+            var redraw_btn = $('#redraw');
+            var skip_btn = $('#skip');
+            redraw_btn.prop('disabled', false);
+            skip_btn.prop('disabled', false);
+            prev_btn.prop('disabled', true);
+            next_btn.prop('disabled', true);
+            if (idx > 0) {
+              prev_btn.prop('disabled', false);
+            }
+            if (idx < num_regions - 1) next_btn.prop('disabled', false);
+            toggleSkipButton();
+          }
+        }
+
+        function mouseWasReleased() {
+          $("#text-area").focus()
+        }
+
+        function check_gold() {
+          if ('gold_answerable' in descriptions[idx]) {
+            if (descriptions[idx].gold_answerable && !bb.getBoxPosition()) {
+              return false;
+            } else if (descriptions[idx].gold_answerable && bb.getBoxPosition()) {
+              var gt_box = descriptions[idx].gt_box;
+              var iou = bb.computeIoU(gt_box.x, gt_box.y, gt_box.w, gt_box.h);
+              if (iou >= 0.7) {
+                return true;
+              } else {
+                return false;
+              }
+            }
+            return descriptions[idx].answerable === descriptions[idx].gold_answerable;
+          }
+          return true;
+        }
+
+        // Update the index, and save the text in the text area.
+        function set_idx(new_idx) {
+          if (new_idx < 0 || new_idx >= num_regions) return;
+          // console.log(descriptions[idx].rect, idx, num_regions);
+          console.log(bb.getCanvas());
+
+          if (!check_gold()) {
+            if (descriptions[idx].gold_answerable) {
+              alert("Uh-oh... This question should have a bounding box. \nYou may not have drawn a box, or the box you draw is not following the instruction above. \nPlease read the instruction carefully and draw again.");
+            } else {
+              alert("This item is not in the image, so there should be no bounding box.  Click 'No Box Exists'");
+            }
+            return false;
+          }
+          console.log(bb.getCanvas());
+          console.log(bb.getBoxPosition());
+
+          // back up current data
+          storeCurrent();
+          // increment index
+          idx = new_idx;
+          render();
+          return true;
+        }
+
+        function storeCurrent() {
+          var d = descriptions[idx];
+          d.rect = bb.getBoxPosition();
+        }
+
+        function toggleSkipButton() {
+          var skip_btn = $('#skip');
+          if (descriptions[idx].answerable) {
+            skip_btn.text('No Box Exists')
+            skip_btn.addClass('red');
+            skip_btn.removeClass('green');
+          } else {
+            skip_btn.text('Box Exists')
+            skip_btn.addClass('green');
+            skip_btn.removeClass('red');
+          }
+          $('#redraw').prop('disabled', !descriptions[idx].answerable);
+        }
+
+        // Enable the UI.
+        function enable_hit() {
+          enabled = true;
+
+          // Enable components
+          $('#next-btn').click(function() {
+            set_idx(idx + 1);
+          });
+          $('#prev-btn').click(function() { set_idx(idx - 1) });
+          $('#redraw').click(function() {
+            if (bb != null) {
+              bb.disable();
+              bb.remove();
+            }
+            bb = new VGG.BBoxDrawer($('#image-container'), input[idx]['url'], 700);
+            bb.enable();
+            bb.reset();
+          });
+          $('#skip').click(function() {
+            descriptions[idx].answerable = !descriptions[idx].answerable;
+            if (!descriptions[idx].answerable) {
+              if (bb != null) {
+                bb.disable();
+                bb.remove();
+              }
+              bb = new VGG.BBoxDrawer($('#image-container'), input[idx]['url'], 700);
+              // bb.enable();
+              bb.reset();
+            } else {
+              bb.enable();
+            }
+            toggleSkipButton();
+          });
+          $('#text-area').prop('disabled', false);
+          $('#submit-btn').prop('disabled', false);
+
+          // Set up submit handler.
+          amtbase.setupSubmit();
+          $('#submit-btn').click(function() {
+            storeCurrent();
+            // console.log(JSON.stringify(descriptions));
+            // validate all descriptions
+            let wrongIdx = null;
+
+            if (_.any(descriptions, function(de, i) { wrongIdx = i+1; return !('rect' in de || !de.answerable)})) {
+              alert('Error: You must draw a bounding box for question ' + wrongIdx + ' (drag with mouse on the image) or image should be marked as not having a box"');
+              return false;
+            }
+
+            if (_.any(descriptions, function(de, i) { wrongIdx = i+1; return de.rect === null && de.answerable})) {
+              alert('Error: You must draw a bounding box for question ' + wrongIdx + ' (drag with mouse on the image) or image should be marked as not having a box"');
+              return false;
+            }
+
+            // otherwise we're good. HIT done!
+            amtbase.setOutput(descriptions);
+
+          });
+        }
+
+// NOW FOLLOWS BOUNDING BOX CODE
+
+var VGG = (function(vg, $) {
+
+  var DEFAULT_OPTIONS = {
+    static_box_color: '#f00',
+    bbox_color: '#ff0',
+    bbox_line_width: 2.0,
+    click_radius: 15,
+    handle_opacity: 0.2,
+    dot_small_radius: 5,
+    dot_big_radius: 10,
+    image_opacity: 1.0,
+    max_height: null,
+    max_width: null,
+    callback: function() {},
+  };
+
+  /*
+  var STATIC_BOX_COLOR = '#f00';
+  var BBOX_COLOR = '#00f';
+  var BBOX_LINE_WIDTH = 2.0;
+
+  var CLICK_RADIUS = 15;
+  var HANDLE_OPACITY = 0.2;
+
+  var OBJECT_SMALL_RADIUS = 5;
+  var OBJECT_BIG_RADIUS = 10;
+  */
+
+  vg.merge_options = function(options, default_options) {
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    for (var opt in default_options) {
+      if (default_options.hasOwnProperty(opt)
+          && !options.hasOwnProperty(opt)) {
+        options[opt] = default_options[opt];
+      }
+    }
+
+    return options;
+  }
+
+  var TEXT_FONT_SIZE = 20;
+  var TEXT_FONT = TEXT_FONT_SIZE + 'px sans-serif';
+  var TEXT_BOX_PADDING = 4;
+
+  vg.BBoxDrawer = function(div, image_url, canvas_width, options) {
+    var that = (this === vg ? {} : this);
+
+    options = vg.merge_options(options, DEFAULT_OPTIONS);
+
+    var scale = null;
+    var canvas = null;
+    var canvas_pos = null;
+    var ctx = null;
+
+    // Most recent positions of the mouse and of a click
+    var click_pos = null;
+    var mouse_pos = null;
+
+    // Whether the box has been been finalized after the initial drag
+    var bbox_drawn = false;
+
+    // Object with properties x, y, w, h
+    var bbox = null;
+    var static_box = null;
+
+    var object_pos = null;
+    var object_name = null;
+
+    var resize_direction = null;
+    var old_bbox = null;
+
+    var img_loaded = true;
+
+    var disabled = true;
+
+    var cursors = {
+      'UL': 'nw-resize',
+      'UR': 'ne-resize',
+      'BL': 'sw-resize',
+      'BR': 'se-resize',
+      'U': 'n-resize',
+      'R': 'e-resize',
+      'L': 'w-resize',
+      'B': 's-resize',
+    };
+
+    var img = new Image();
+    img.onload = setup;
+    img.onerror = function() {
+      img_loaded = false;
+    }
+    img.src = image_url;
+
+    that.getBoxPosition = function() {
+      if (bbox) {
+        // Convert to image coordinates
+        return {
+          'x': Math.floor(toImageCoords(bbox.x)),
+          'y': Math.floor(toImageCoords(bbox.y)),
+          'w': Math.floor(toImageCoords(bbox.w)),
+          'h': Math.floor(toImageCoords(bbox.h))
+        };
+      }
+      return null;
+    }
+
+    that.setBoxPosition = function(b) {
+      scale = choose_scale(img)
+      // copy it over
+      bbox = {};
+      bbox.x = Math.floor(toCanvasCoords(b.x));
+      bbox.y = Math.floor(toCanvasCoords(b.y));
+      bbox.w = Math.floor(toCanvasCoords(b.w));
+      bbox.h = Math.floor(toCanvasCoords(b.h));
+      draw();
+    }
+
+    that.enable = function() {
+      disabled = false;
+      draw();
+    }
+
+    that.disable = function() {
+      disabled = true;
+      mouseup();
+      draw();
+    }
+
+    that.setObject = function(x, y, name) {
+      if (scale) {
+        object_pos = {'x': toCanvasCoords(x), 'y': toCanvasCoords(y)};
+      } else {
+        object_pos = {'x': x, 'y': y};
+      }
+      object_name = name;
+    }
+
+    that.setStaticBox = function(box) {
+      static_box = $.extend({}, box);
+      if (scale) {
+        static_box.x = toCanvasCoords(box.x);
+        static_box.y = toCanvasCoords(box.y);
+        static_box.w = toCanvasCoords(box.w);
+        static_box.h = toCanvasCoords(box.h);
+      }
+      draw();
+    }
+
+    that.computeIoU = function(x, y, w, h) {
+      if (bbox) {
+        var pos = that.getBoxPosition();
+        var ax1 = pos.x;
+        var ax2 = pos.x + pos.w;
+        var ay1 = pos.y;
+        var ay2 = pos.y + pos.h;
+        var bx1 = x;
+        var bx2 = x + w;
+        var by1 = y;
+        var by2 = y + h;
+        var xx1 = Math.max(ax1, bx1);
+        var xx2 = Math.min(ax2, bx2);
+        var ww = Math.max(xx2 - xx1, 0);
+        var yy1 = Math.max(ay1, by1);
+        var yy2 = Math.min(ay2, by2);
+        var hh = Math.max(yy2 - yy1, 0);
+        var intersection = ww * hh;
+        var union = pos.w * pos.h + w * h - intersection;
+        console.log(ax1, ax2, ay1, ay2, bx1, bx2, by1, by2);
+        console.log('inter_w', ww);
+        console.log('inter_h', hh);
+        console.log('inter', intersection);
+        console.log('union', union);
+        return intersection * 1. / union;
+      }
+      return null;
+    }
+
+    function choose_scale(img) {
+      if (_.isNumber(options.max_width) && _.isNumber(options.max_height)) {
+        var scale_h = img.width / options.max_width;
+        var scale_v = img.height / options.max_height;
+        return Math.max(scale_h, scale_v);
+      } else {
+        return img.width / canvas_width;
+      }
+    }
+
+    that.restoring = function() {
+      bbox_drawn = true;
+    }
+
+    that.reset = function() {
+      click_pos = null;
+      mouse_pos = null;
+      bbox_drawn = false;
+      bbox = null;
+      static_box = null;
+      var object_pos = null;
+      var object_name = null;
+      var resize_direction = null;
+      var old_bbox = null;
+      $("#drawcanv").css({'cursor': 'crosshair'}); // reset cursor
+      draw();
+    }
+
+    function setup() {
+      // scale = img.width / canvas_width;
+      scale = choose_scale(img);
+      canvas_width = img.width / scale;
+      var canvas_height = img.height / scale;
+      canvas = $('<canvas>')
+                .attr({'width': canvas_width,
+                       'height': canvas_height})
+                .attr('id', 'drawcanv')
+                .css({'cursor': 'crosshair'})
+                .appendTo(div);
+
+      canvas_pos = {'x': canvas.offset().left, 'y': canvas.offset().top};
+      ctx = canvas[0].getContext('2d');
+      canvas.mousemove(mousemove);
+      canvas.mousedown(mousedown);
+      canvas.mouseup(mouseup);
+      canvas.mouseout(mouseup);
+
+      if (object_pos) {
+        object_pos.x = toCanvasCoords(object_pos.x);
+        object_pos.y = toCanvasCoords(object_pos.y);
+      }
+
+      // Convert the static box from image coordinates to canvas coordinates
+      if (static_box) {
+        var props = ['x', 'y', 'w', 'h'];
+        for (var i = 0; i < props.length; i++) {
+          static_box[props[i]] = toCanvasCoords(static_box[props[i]]);
+        }
+      }
+
+      draw();
+      options.callback();
+    }
+
+    function toCanvasCoords(x) { return x / scale; }
+    function toImageCoords(x) { return x * scale; }
+    function setCursor(cursor) { canvas.css('cursor', cursor); }
+
+    function getPosition(e) {
+      var x = e.pageX - canvas_pos.x;
+      var y = e.pageY - canvas_pos.y;
+      return {'x': x, 'y': y};
+    }
+
+    function mousedown(e) {
+      if (disabled) return;
+      click_pos = getPosition(e);
+      if (bbox) {
+        resize_direction = detectCollision(click_pos.x, click_pos.y, bbox);
+        if (resize_direction) {
+          old_bbox = $.extend({}, bbox);
+        }
+      }
+    }
+
+    function mouseup(e) {
+      click_pos = null;
+      resize_direction = null;
+      if (bbox) {
+        bbox_drawn = true;
+        setCursor('pointer');
+      }
+      mouseWasReleased();
+      draw();
+    }
+
+    function mousemove(e) {
+      mouse_pos = getPosition(e);
+      updateBBox();
+
+      if (bbox && !click_pos && !disabled) {
+        var collision = detectCollision(mouse_pos.x, mouse_pos.y, bbox);
+        if (cursors.hasOwnProperty(collision)) {
+          setCursor(cursors[collision]);
+        } else {
+          setCursor('pointer');
+        }
+      }
+
+      draw();
+    }
+
+    function detectCollision(x, y, box) {
+      function dist(x1, y1, x2, y2) {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+      if (dist(x, y, box.x, box.y) < options.click_radius) {
+        return 'UL';
+      } else if (dist(x, y, box.x + box.w, box.y) < options.click_radius) {
+        return 'UR';
+      } else if (dist(x, y, box.x, box.y + box.h) < options.click_radius) {
+        return 'BL';
+      } else if (dist(x, y, box.x + box.w, box.y + box.h)
+                 < options.click_radius) {
+        return 'BR';
+      } else if (Math.abs(box.x - x) < options.click_radius) {
+        return 'L';
+      } else if (Math.abs(box.x + box.w - x) < options.click_radius) {
+        return 'R';
+      } else if (Math.abs(box.y - y) < options.click_radius
+                 && x >= bbox.x && x <= bbox.x + bbox.w) {
+        return 'U';
+      } else if (Math.abs(box.y + box.h - y) < options.click_radius
+                 && y >= bbox.y && y <= bbox.y + bbox.h) {
+        return 'B';
+      }
+
+      return null;
+    }
+
+    function updateBBox() {
+      function makeBBox(x1, y1, x2, y2) {
+        var x = Math.min(x1, x2);
+        var y = Math.min(y1, y2);
+        var w = Math.max(x1, x2) - x;
+        var h = Math.max(y1, y2) - y;
+        return {'x': x, 'y': y, 'w': w, 'h': h};
+      }
+      if (!bbox_drawn && click_pos && mouse_pos) {
+        bbox = makeBBox(click_pos.x, click_pos.y, mouse_pos.x, mouse_pos.y);
+      } else if (bbox_drawn && click_pos && mouse_pos && resize_direction) {
+        var x1 = old_bbox.x;
+        var x2 = old_bbox.x + old_bbox.w;
+        var y1 = old_bbox.y;
+        var y2 = old_bbox.y + old_bbox.h;
+        if (resize_direction === 'L'
+            || resize_direction === 'UL'
+            || resize_direction === 'BL') {
+          x1 = mouse_pos.x;
+        }
+        if (resize_direction === 'R'
+            || resize_direction === 'UR'
+            || resize_direction === 'BR') {
+          x2 = mouse_pos.x;
+        }
+        if (resize_direction === 'U'
+            || resize_direction === 'UR'
+            || resize_direction === 'UL') {
+          y1 = mouse_pos.y;
+        }
+        if (resize_direction === 'B'
+            || resize_direction === 'BR'
+            || resize_direction === 'BL') {
+          y2 = mouse_pos.y;
+        }
+        bbox = makeBBox(x1, y1, x2, y2);
+      }
+    }
+
+    function drawBox(box, box_color) {
+      ctx.save();
+
+      function r(x) { return Math.floor(x); }
+
+      ctx.strokeStyle = box_color;
+      ctx.lineWidth = options.bbox_line_width;
+      ctx.strokeRect(r(box.x), r(box.y), r(box.w), r(box.h));
+
+      ctx.restore();
+    }
+
+    function drawCrosshair(x, y) {
+      y = Math.floor(y) + 0.5;
+      x = Math.floor(x) + 0.5;
+
+      ctx.save();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fff';
+      ctx.globalAlpha = 0.3;
+
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height());
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width(), y);
+      ctx.stroke();
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#000';
+      ctx.globalAlpha = 1.0;
+
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height());
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width(), y);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawHandle(x, y) {
+      ctx.save();
+      ctx.globalAlpha = options.handle_opacity;
+
+      ctx.beginPath();
+      ctx.arc(x, y, options.click_radius, 0, 2 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawObject(x, y, name, emphasized) {
+      ctx.save();
+      ctx.fillStyle = options.bbox_color;
+
+      var r = emphasized ? options.dot_big_radius : options.dot_small_radius;
+
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      if (emphasized) {
+        // Draw the text box
+        var width = ctx.measureText(name).width;
+
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#000';
+        ctx.beginPath();
+        var x1 = x - width - TEXT_BOX_PADDING;
+        var x2 = x + width + TEXT_BOX_PADDING;
+        var y1 = y + options.dot_big_radius + 1.5 * TEXT_BOX_PADDING;
+        var y2 = y1 + 1.5 * TEXT_BOX_PADDING + TEXT_FONT_SIZE;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1, y2);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x2, y1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = TEXT_FONT;
+        ctx.fillStyle = '#000';
+        var tx = x - width;
+        var ty = y + TEXT_FONT_SIZE + 2.5 * TEXT_BOX_PADDING + options.dot_big_radius;
+        ctx.fillText(name, tx, ty);
+      }
+
+      ctx.restore();
+    }
+
+    function draw() {
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width(), canvas.height());
+      ctx.save();
+      ctx.globalAlpha = options.image_opacity;
+      ctx.drawImage(img, 0, 0, canvas.width(), canvas.height());
+      ctx.restore();
+
+      if (disabled) return;
+
+      if (static_box) {
+        drawBox(static_box, options.static_box_color);
+      }
+
+      if (object_name && object_pos) {
+        var emphasized = false;
+        if (mouse_pos) {
+          var dx = mouse_pos.x - object_pos.x;
+          var dy = mouse_pos.y - object_pos.y;
+          if (Math.sqrt(dx * dx + dy * dy) < options.click_radius) {
+            emphasized = true;
+          }
+        }
+
+        drawObject(object_pos.x, object_pos.y, object_name, emphasized);
+      }
+
+      if (bbox) {
+        if (bbox_drawn) {
+          drawHandle(bbox.x, bbox.y);
+          drawHandle(bbox.x + bbox.w, bbox.y);
+          drawHandle(bbox.x, bbox.y + bbox.h);
+          drawHandle(bbox.x + bbox.w, bbox.y + bbox.h);
+        } else {
+          drawCrosshair(bbox.x, bbox.y);
+          drawCrosshair(bbox.x + bbox.w, bbox.y + bbox.h);
+        }
+        drawBox(bbox, options.bbox_color);
+      } else if (mouse_pos) {
+        drawCrosshair(mouse_pos.x, mouse_pos.y);
+      }
+    }
+
+    that.getCanvas = function() {
+      return canvas;
+    }
+
+    that.remove = function() {
+      if (img_loaded) {
+        canvas.remove();
+      }
+    }
+
+    return that;
+  }
+
+  return vg;
+
+}(VGG || {}, jQuery));
+
+
+
+ main();
+});
+</script>
+</body>
+</html>

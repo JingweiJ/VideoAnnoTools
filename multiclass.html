@@ -1,0 +1,489 @@
+<html xmlns="http://www.w3.org/1999/html">
+  <head>
+    <title>Choose what actions are happening in videos</title>
+    <!-- amtbase depends on these libraries -->
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+    <!-- end of required libraries -->
+    <script src='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'></script>
+    <script src='http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js'></script>
+    <link href='http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet'>
+    <style>
+      .reference-video-container {
+        background-color: aliceblue;
+      }
+      .reference-image-container {
+        background-color: cornsilk;
+      }
+      #image-container-subject {
+        color: red;
+      }
+      #image-container-object {
+        color: green;
+      }
+      #text-area {
+        margin: 10px 0;
+        font-size: 24pt;
+      }
+      #text-boxes {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+      #explanation-area {
+        margin-bottom: 20px;
+      }
+      #button-div {
+        margin-bottom: 10px;
+      }
+      #counter {
+        margin: 0 10px;
+        font-size: 20pt;
+        font-weight: bold;
+      }
+      img {
+        height: 600px;
+      }
+      img.example {
+        height: 200px;
+      }
+      #instructions-container {
+        margin-top: 15px;
+        margin-bottom: 30px;
+        background-color: #F0EAD6;
+      }
+      p {
+        font-size: 17px;
+        /* text-align: center; */
+      }
+      #instructions-text {
+          width: 80%;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .light {
+          background-color: #F0EAD6;
+      }
+      .dark {
+          background-color: #F0EAD6;
+      }
+      .selected {
+        background-color: #66ccff;
+      }
+      .class {
+        margin: 20px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .class:hover {
+        opacity: 0.7;
+      }
+      #background-section {
+          width: 70%;
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .example {
+          background-color: #ede0b6;
+          border: 30px;
+          padding: 10px;
+          margin: 10px;
+      }
+      .example-big {
+          background-color: #ede0b6;
+          border: 30px;
+          padding: 10px;
+          margin: 10px;
+      }
+      .example-big img {
+        height: 450px;
+      }
+      #instructions-text p {
+          margin: 10px;
+      }
+      .sg-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .class-list-container {
+        /*display: flex;*/
+        /*flex-direction: column;*/
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h2>Choose the actions that are happening in this video clip. (Select all that apply)</h2>
+    </div>
+
+    <div class='container-fluid'>
+      <div class="row">
+        <div class='col-xs-12 text-center reference-video-container'>
+          <h4><span id="reference-activity"></span></h4>
+          <div id="gif-container"></div>
+        </div>
+      </div>
+      <div class='col-xs-4 text-center sg-container' >
+        <h1 id='subject' style="color:#FF0000"></h1>
+      </div>
+      <div class='col-xs-4 text-center sg-container'>
+        <div class="col-xs-12 container-fluid">
+          <div class="row">
+            <div class='text-center' id='class-list'>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class='col-xs-4 text-center sg-container' >
+        <h1 id='object' style="color:#0000FF"></h1>
+      </div>
+      <div class='row'>
+        <div class='col-xs-8 col-xs-offset-2 text-center' id='button-div'>
+          <button id='prev-btn' class='btn btn-lg btn-primary' disabled>Back</button>
+          <span id='counter'>
+            <span class='counter-top'></span> / <span class='counter-bottom'></span>
+          </span>
+          <button id='next-btn' class='btn btn-lg btn-primary' disabled>Next</button>
+        </div>
+        <div class='col-xs-8 col-xs-offset-2'>
+          <script type='text/json' id='input'>
+  [{"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000000.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000000.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000000.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000000.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000001.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000001.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000001.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000001.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000002.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000002.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000002.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000002.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000003.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000003.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000003.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000003.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000004.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000004.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000004.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000004.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000005.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000005.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000005.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000005.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000006.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000006.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000006.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000006.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000007.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000007.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000007.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000007.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000008.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000008.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000008.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000008.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000009.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000009.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000009.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000009.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000010.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000010.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000010.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000010.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000011.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000011.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000011.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000011.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000012.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000012.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000012.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000012.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000013.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000013.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000013.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000013.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000014.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000014.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000014.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000014.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000015.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000015.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000015.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000015.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000016.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000016.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000016.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000016.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000017.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000017.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000017.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000017.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000018.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000018.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000018.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000018.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000019.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000019.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000019.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000019.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000020.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000020.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000020.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000020.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000021.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000021.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000021.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000021.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000022.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000022.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000022.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000022.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000023.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000023.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000023.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000023.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000024.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000024.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000024.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000024.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000025.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000025.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000025.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000025.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000026.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000026.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000026.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000026.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000027.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000027.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000027.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000027.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000028.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000028.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000028.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000028.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000029.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000029.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000029.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000029.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000030.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000030.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000030.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000030.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000031.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000031.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000031.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000031.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000032.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000032.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000032.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000032.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000033.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000033.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000033.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000033.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000034.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000034.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000034.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000034.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000035.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000035.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000035.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000035.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000036.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000036.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000036.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000036.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000037.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000037.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000037.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000037.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000038.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000038.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000038.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000038.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000039.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000039.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000039.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000039.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000040.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000040.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000040.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000040.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000041.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000041.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000041.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000041.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000042.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000042.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000042.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000042.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000043.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000043.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000043.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000043.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000044.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000044.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000044.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000044.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000045.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000045.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000045.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000045.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000046.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000046.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000046.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000046.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000047.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000047.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000047.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000047.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000048.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000048.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000048.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000048.gif", "activity": "making tea"}, {"classes": ["open a shelf", "close a shelf", "put something in the shelf", "take something out of the shelf", "take a cup", "put a cup somewhere", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000049.gif", "activity": "making tea"}, {"classes": ["hold a cup", "fill a cup", "pour out of a cup", "take a tea bag", "put a tea bag somewhere", "hold a tea bag", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000049.gif", "activity": "making tea"}, {"classes": ["open a tea bag", "take a kettle from somewhere", "put a kettle somewhere", "hold a kettle", "open a kettle", "close a kettle", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000049.gif", "activity": "making tea"}, {"classes": ["pour out from a kettle", "fill a kettle", "turn on a faucet", "turn off a faucet", "*** none of above ***"], "gif_url": "http://ai.stanford.edu/~jingweij/pdata/gifs/tokyo3_making_tea_001.mkv/000049.gif", "activity": "making tea"}]
+</script>
+<form id='results-form' method='post' action='dummy' class='text-center'>
+  <input type='hidden' value='' name='assignmentId' id='assignmentId'/>
+  <input type='hidden' value='' name='output' id='output'/>
+  <input type='submit' class='btn btn-lg btn-success' id='submit-btn' value='Submit' disabled/>          
+</form>
+<script>
+  var amtbase = (function() {
+    
+    // Copied from http://james.padolsey.com/javascript/bujs-1-getparameterbyname/
+    function getUrlParam(name) {
+      var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+      return match ? decodeURIComponent(match[1].replace(/\+/g, ' ')) : null;
+    }
+
+    function getInput(default_input) {
+      if (typeof(default_input) === 'undefined') default_input = null;
+      try {
+        return JSON.parse($('#input').html());
+      } catch (e) {
+        return default_input;
+      }
+    }
+
+    function setOutput(output) {
+      $('#output').val(JSON.stringify(output));
+    }
+
+    function isPreview() {
+      return false;
+      var assignment_id = getUrlParam('assignmentId');
+      if (assignment_id === null) return false;
+      return assignment_id == 'ASSIGNMENT_ID_NOT_AVAILABLE';
+    }
+
+    function setupSubmit() {
+      var submit_to = getUrlParam('turkSubmitTo');
+      $('#results-form').attr('action', submit_to + '/mturk/externalSubmit');                      
+      $('#assignmentId').val(getUrlParam('assignmentId'));
+    }
+
+    return {
+      getInput: getInput,
+      setOutput: setOutput,
+      isPreview: isPreview,
+      setupSubmit: setupSubmit,
+    }
+
+  })();
+</script>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      $(function() {
+
+        // Define some default input.
+        var DEFAULT_INPUT = [];
+
+        var input = null;
+        // var bb = null;
+
+        // answers of images, parallel to input.
+        var answers = [];
+        var selected;
+        // var additional_texts = [];
+
+        // Some variables to track state of the HIT.
+        var idx = 0;
+        var enabled = false;
+
+        var show_instructions = false;
+
+        // gold standard correctness flag
+        var gold_correct = true;
+
+        function main() {
+          // If this is a HIT on AMT, then replace the default input with the real input.
+          input = amtbase.getInput(DEFAULT_INPUT);
+
+          // Enable the UI if the HIT is not in preview mode.
+          if (!amtbase.isPreview()) {
+            enable_hit();
+          }
+
+          // Set up the answers.
+          _.each(input, function() { answers.push([]); });
+          // _.each(input, function() { additional_texts.push(null); });
+          selected = answers[idx];
+
+          // Preload all images
+          // var imgs = [];
+          // _.each(input, function(question) {
+          //   var img_url = question['url'];
+          //   // questions.push(question['question']);
+          //   var img = new Image();
+          //   img.onload = function() { console.log('loaded image from ' + img_url); };
+          //   img.src = img_url;
+          // });
+
+          render();
+        }
+
+        function selector_fn(div, k) {
+          return function() {
+            if (selected.includes(k)) {
+              answers[idx].splice(answers[idx].indexOf(k), 1);
+              // div.removeClass('selected');
+            } else {
+              answers[idx].push(k);
+              // div.addClass('selected');
+            }
+            render();
+          }
+        }
+
+        // Use the current index to update the image and description
+        function render() {
+          // $('#question').text('Question: ' + input[idx]['question']);
+          // $('#response').text('Response: ' + input[idx]['response']);
+
+          // Set up the image
+          // if (bb != null) {
+          //   bb.disable();
+          //   bb.remove();
+          // }
+
+          $('#gif-container').empty();
+          // $('#image-container').empty();
+          $('#class-list').empty();
+          // $('<img>').attr('src', input[idx]['url']).appendTo($('#image-container'));
+          // $('#subject').text(input[idx]['subject'].name);
+          // $('#object').text(input[idx]['object'].name);
+          $('#reference-activity').text(input[idx]['activity']);
+          // $('#image-container-subject').text(input[idx]['subject'].name);
+          // $('#image-container-object').text(input[idx]['object'].name);
+          $('#gif-container').html("<img src=" + input[idx]['gif_url'] + " max-width=600px></img>");
+
+          // bb = new VGG.BBoxDrawer($('#image-container'), input[idx]['url'], 600);
+          // bb.enable();
+          // if('rect' in input[idx]['subject']) {
+          //   // render box in its place
+          //   var drect = input[idx]['subject'].rect;
+          //   if (drect) {
+          //     //debugger;
+          //     bb.restoring();
+          //     // bb.setBoxPosition(drect);
+          //     bb.setStaticBox1(drect);
+          //   }
+          // }
+          // if('rect' in input[idx]['object']) {
+          //   // render box in its place
+          //   var drect = input[idx]['object'].rect;
+          //   if(drect) {
+          //     //debugger;
+          //     bb.restoring();
+          //     // bb.setBoxPosition(drect);
+          //     bb.setStaticBox2(drect);
+          //   }
+          // }
+
+
+          // bb.disable();
+
+          selected = answers[idx];
+          // if (selected.includes(input[idx]['classes'].length - 1)) {
+          //   $('#other-class-area').show();
+          // } else {
+          //   $('#other-class-area').hide();
+          // }
+
+          // Set up the selection area
+          for (let i=0; i < input[idx]['classes'].length; i++) {
+            let rel = input[idx]['classes'][i];
+            let rel_div = $('<div>')
+                            .attr('class', 'class')
+                            .attr('id', 'rel-'+i)
+                            .appendTo('#class-list');
+
+            // if (i === input[idx]['classes'].length - 1) {
+            $('<h4>')
+                .text(rel)
+                .addClass('rel-text text-center')
+                .appendTo(rel_div);
+            // } else {
+            //   $('<h4>')
+            //       .text(input[idx]['subject'].name + ' ' + rel + ' ' + input[idx]['object'].name)
+            //       .addClass('rel-text text-center')
+            //       .appendTo(rel_div);
+            // }
+
+            // Alternate background colors
+            if (i % 2 == 0) {
+              rel_div.addClass('dark');
+            } else {
+              rel_div.addClass('light')
+            }
+
+            // Highlight previously selected
+            if (selected.includes(i)) {
+              rel_div.addClass('selected');
+            }
+
+            rel_div.click(selector_fn(rel_div, i));
+          }
+
+          // Refresh the counter
+          $('.counter-top').text(idx + 1);
+          $('.counter-bottom').text(input.length);
+
+          // If the UI is enabled, enable or disable the buttons depending on
+          // the index.
+          if (enabled) {
+            var prev_btn = $('#prev-btn');
+            var next_btn = $('#next-btn');
+
+            prev_btn.prop('disabled', true);
+  	        next_btn.prop('disabled', true);
+            if (idx > 0) {
+              prev_btn.prop('disabled', false);
+            }
+            if (idx < input.length - 1) next_btn.prop('disabled', false);
+          }
+        }
+
+        // Update the index, and save the text in the text area.
+        function set_idx(new_idx) {
+          if (new_idx < 0 || new_idx >= input.length) return;
+          answers[idx] = selected;
+          idx = new_idx;
+          render();
+        }
+
+        function check_answer(answer, gold_answer) {
+            return answer === gold_answer;
+        }
+
+        function check_gold() {
+            if (!("gold_answer" in input[idx])) {
+                return true;
+            }
+            // TODO: modify the codes below for multiple choices
+            answer = selected;
+            gold_answer = input[idx].gold_answer;
+            gold_explanation = input[idx].gold_explanation;
+            if (check_answer(answer, gold_answer)) {
+                return true;
+            } else {
+                alert_string = 'Your answer is incorrect.'
+                alert_string += `\nReview the common mistakes we described in the instructions.`;
+                alert_string += "\n\n\n" + "Please fix your answer before continuing.";
+                alert(alert_string);
+                gold_correct = false;
+                return false;
+            }
+        }
+
+        function toggle_instructions() {
+          if (show_instructions) {
+            $('#instructions-section').hide();
+            $('#show-instructions').text('Show Instructions');
+          } else {
+            $('#instructions-section').show();
+            $('#show-instructions').text('Hide Instructions');
+          }
+            show_instructions = !show_instructions;
+        }
+
+        // Enable the UI.
+        function enable_hit() {
+          enabled = true;
+
+          // Enable components
+          $('#next-btn').click(function() {
+              if (check_gold()) {
+                  set_idx(idx + 1);
+              }
+          });
+          $('#prev-btn').click(function() {
+              if (check_gold()) {
+                  set_idx(idx - 1);
+              } else {
+              }
+          });
+          $('#show-instructions').click(function() { toggle_instructions() });
+          if (idx < input.length - 1) {
+            $('#next-btn').prop('disabled', false);
+          } else {
+            $('#next-btn').prop('disabled', true);
+          }
+          $('#text-area').prop('disabled', false);
+          $('#explanation-area').prop('disabled', false);
+          $('#submit-btn').prop('disabled', false);
+
+          // Set up submit handler.
+          amtbase.setupSubmit();
+          $('#submit-btn').click(function() {
+            if (!check_gold()) {
+                return false;
+            }
+            answers[idx] = selected;
+
+            // Unselected detection
+            if (_.any(answers, function(d) { return (d === undefined || d.length == 0); })) {
+              alert('You did not select an option for one or more questions. Correct before submitting.');
+              return false;
+            }
+
+            var answer_text = [];
+            for (var k = 0; k < input.length; k++) {
+                answer_text.push([]);
+                for (var l = 0; l < answers[k].length; l++) {
+                    answer_text[k].push(input[k]['classes'][answers[k][l]]);
+                }
+            }
+
+            var output = _.map(_.zip(input, answers, answer_text), function(x) {
+              if ("gold_answer" in x[0]) {
+                return {'info': x[0], 'answer_idx': x[1], 'answer': x[2], 'gold_correct': gold_correct};
+              } else {
+                return {'info': x[0], 'answer_idx': x[1], 'answer': x[2]};
+              }
+            });
+            console.log(JSON.stringify(output));
+            amtbase.setOutput(output);
+          });
+        }
+        main();
+
+      });
+    </script>
+  </body>
+</html>
